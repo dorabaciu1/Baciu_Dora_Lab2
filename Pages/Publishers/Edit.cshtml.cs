@@ -20,7 +20,7 @@ namespace Baciu_Dora_Lab2.Pages.Publishers
         {
             _context = context;
         }
-
+        //.
         [BindProperty]
         public Publisher Publisher { get; set; } = default!;
         [BindProperty]
