@@ -8,8 +8,8 @@ namespace Baciu_Dora_Lab2.Models
     {
         public int ID { get; set; }
         [Display(Name = "Book Title")]
-        public string Title { get; set; }
-        public string Author { get; set; }
+        public string? Title { get; set; }
+        public string? Author { get; set; }
         [Column(TypeName = "decimal(6, 2)")]
         public decimal Price { get; set; }
         [DataType(DataType.Date)]
@@ -17,5 +17,7 @@ namespace Baciu_Dora_Lab2.Models
         public int? PublisherID { get; set; }
 
         public Publisher? Publisher { get; set; }
+        public ICollection<BookCategory>? BookCategories { get; set; }
+
     }
 }

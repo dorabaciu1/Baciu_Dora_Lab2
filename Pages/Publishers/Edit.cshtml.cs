@@ -8,10 +8,11 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Baciu_Dora_Lab2.Data;
 using Baciu_Dora_Lab2.Models;
+using Baciu_Dora_Lab2.Models;
 
 namespace Baciu_Dora_Lab2.Pages.Publishers
 {
-    public class EditModel : PageModel
+    public class EditModel : BookCategoriesPageModel
     {
         private readonly Baciu_Dora_Lab2.Data.Baciu_Dora_Lab2Context _context;
 
@@ -22,6 +23,8 @@ namespace Baciu_Dora_Lab2.Pages.Publishers
 
         [BindProperty]
         public Publisher Publisher { get; set; } = default!;
+        [BindProperty]
+        public Book book { get; set; }
 
         public async Task<IActionResult> OnGetAsync(int? id)
         {
@@ -29,6 +32,11 @@ namespace Baciu_Dora_Lab2.Pages.Publishers
             {
                 return NotFound();
             }
+           book = await _context.Book
+               .Include(b => b.Publisher)
+               .Include(b => b.BookCategories).ThenInclude(b => b.Category)
+               .AsNoTracking()
+               .FirstOrDefaultAsync(m => m.ID == id);
 
             var publisher =  await _context.Publisher.FirstOrDefaultAsync(m => m.ID == id);
             if (publisher == null)
@@ -37,41 +45,46 @@ namespace Baciu_Dora_Lab2.Pages.Publishers
             }
             Publisher = publisher;
             return Page();
+
         }
 
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more information, see https://aka.ms/RazorPagesCRUD.
-        public async Task<IActionResult> OnPostAsync()
+        public async Task<IActionResult> OnPostAsync(int? id, string[]
+selectedCategories)
         {
-            if (!ModelState.IsValid)
+            if (id == null)
             {
-                return Page();
+                return NotFound();
             }
 
-            _context.Attach(Publisher).State = EntityState.Modified;
+            //se va include Author  conform cu sarcina de la lab 2 
 
-            try
+            var bookToUpdate = await _context.Book
+                .Include(i => i.Publisher)
+                .Include(i => i.BookCategories)
+                    .ThenInclude(bc => bc.Category)
+                .FirstOrDefaultAsync(s => s.ID == id);
+            if (bookToUpdate == null)
             {
+                return NotFound();
+            }
+            PopulateAssignedCategoryData(_context, book);
+            //se va modifica AuthorID  conform cu sarcina de la lab 2 
+
+            if (await TryUpdateModelAsync<Book>(
+                bookToUpdate,
+                "book",
+                i => i.Title, i => i.Author,
+                 i => i.Price, i => i.PublishingDate, i => i.PublisherID))
+            {
+                UpdateBookCategories(_context, selectedCategories, bookToUpdate);
                 await _context.SaveChangesAsync();
+                return RedirectToPage("./Index");
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!PublisherExists(Publisher.ID))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return RedirectToPage("./Index");
-        }
-
-        private bool PublisherExists(int id)
-        {
-            return _context.Publisher.Any(e => e.ID == id);
+            UpdateBookCategories(_context, selectedCategories, bookToUpdate);
+            PopulateAssignedCategoryData(_context, bookToUpdate);
+            return Page();
         }
     }
 }

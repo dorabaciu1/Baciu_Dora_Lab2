@@ -19,11 +19,34 @@ namespace Baciu_Dora_Lab2.Pages.Publishers
             _context = context;
         }
 
-        public IList<Publisher> Publisher { get;set; } = default!;
+        public IList<Publisher> Publisher { get; set; } = default!;
+        public BookData BookD { get; set; }
+        public int BookID { get; set; }
+        public int CategoryID { get; set; }
 
-        public async Task OnGetAsync()
+
+        public async Task OnGetAsync(int? id, int? categoryID)
         {
-            Publisher = await _context.Publisher.ToListAsync();
+            BookD = new BookData();
+
+            //se va include Author  conform cu sarcina de la lab 2 
+
+            BookD.Books = await _context.Book
+                  .Include(b => b.Publisher)
+                  .Include(b => b.BookCategories)
+                  .ThenInclude(b => b.Category)
+                  .AsNoTracking()
+                  .OrderBy(b => b.Title)
+                  .ToListAsync();
+
+            if (id != null)
+            {
+                BookID = id.Value;
+                Book book = BookD.Books
+                    .Where(i => i.ID == id.Value).Single();
+                BookD.Categories = book.BookCategories.Select(s => s.Category);
+            }
+
         }
     }
 }
