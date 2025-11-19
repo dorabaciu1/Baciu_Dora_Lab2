@@ -1,12 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Baciu_Dora_Lab2.Data;
+using Baciu_Dora_Lab2.Models;
+using Baciu_Dora_Lab2.Models.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using Baciu_Dora_Lab2.Data;
-using Baciu_Dora_Lab2.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Baciu_Dora_Lab2.Pages.Publishers
 {
@@ -20,33 +21,33 @@ namespace Baciu_Dora_Lab2.Pages.Publishers
         }
 
         public IList<Publisher> Publisher { get; set; } = default!;
-        public BookData BookD { get; set; }
+        public PublisherIndexData PublisherData { get; set; }
+        public int PublisherID { get; set; }
         public int BookID { get; set; }
-        public int CategoryID { get; set; }
 
+        
 
         public async Task OnGetAsync(int? id, int? categoryID)
         {
-            BookD = new BookData();
-
-            //se va include Author  conform cu sarcina de la lab 2 
-
-            BookD.Books = await _context.Book
-                  .Include(b => b.Publisher)
-                  .Include(b => b.BookCategories)
-                  .ThenInclude(b => b.Category)
-                  .AsNoTracking()
-                  .OrderBy(b => b.Title)
-                  .ToListAsync();
+            
+            PublisherData = new PublisherIndexData();
+            
+            PublisherData.Publishers = await _context.Publisher
+                .Include(i => i.Books)
+                    .ThenInclude(c => c.Author)
+                .OrderBy(i => i.PublisherName)
+                .ToListAsync();
 
             if (id != null)
             {
-                BookID = id.Value;
-                Book book = BookD.Books
+                PublisherID = id.Value;
+                Publisher publisher = PublisherData.Publishers
                     .Where(i => i.ID == id.Value).Single();
-                BookD.Categories = book.BookCategories.Select(s => s.Category);
+                PublisherData.Books = publisher.Books;
             }
 
-        }
+
+            
+            }
     }
 }
